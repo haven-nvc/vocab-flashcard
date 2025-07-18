@@ -127,13 +127,17 @@ class FlashcardApp {
             console.log('단어장 데이터 로드 시작...');
             console.log('API URL:', CONFIG.API_URL);
             
-            const response = await fetch(CONFIG.API_URL, {
+            // CORS 프록시를 사용하여 API 호출
+            const proxyUrl = 'https://api.allorigins.win/raw?url=';
+            const targetUrl = encodeURIComponent(CONFIG.API_URL);
+            const fullUrl = proxyUrl + targetUrl;
+            
+            console.log('프록시 URL:', fullUrl);
+            
+            const response = await fetch(fullUrl, {
                 method: 'GET',
                 mode: 'cors',
-                cache: 'no-cache',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
+                cache: 'no-cache'
             });
             console.log('Fetch 응답 상태:', response.status, response.statusText);
             
@@ -172,6 +176,8 @@ class FlashcardApp {
                 console.warn('기타 오류 감지, 로컬 테스트 데이터 사용');
             }
             
+            // 프록시 실패 시 로컬 데이터 사용
+            console.log('프록시 실패, 로컬 테스트 데이터로 대체');
             this.useLocalTestData();
         }
     }
@@ -182,7 +188,7 @@ class FlashcardApp {
     useLocalTestData() {
         console.log('로컬 테스트 데이터 사용');
         
-        // 테스트용 단어 데이터
+        // 테스트용 단어 데이터 (더 풍부한 예시)
         this.vocabulary = [
             { word: "apple", meaning: "사과" },
             { word: "banana", meaning: "바나나" },
@@ -193,7 +199,17 @@ class FlashcardApp {
             { word: "phone", meaning: "전화" },
             { word: "book", meaning: "책" },
             { word: "car", meaning: "자동차" },
-            { word: "house", meaning: "집" }
+            { word: "house", meaning: "집" },
+            { word: "dog", meaning: "개" },
+            { word: "cat", meaning: "고양이" },
+            { word: "bird", meaning: "새" },
+            { word: "fish", meaning: "물고기" },
+            { word: "tree", meaning: "나무" },
+            { word: "flower", meaning: "꽃" },
+            { word: "sun", meaning: "태양" },
+            { word: "moon", meaning: "달" },
+            { word: "star", meaning: "별" },
+            { word: "water", meaning: "물" }
         ];
         
         console.log(`${this.vocabulary.length}개의 테스트 단어를 로드했습니다.`);
