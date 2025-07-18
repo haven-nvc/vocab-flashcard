@@ -15,6 +15,13 @@
  */
 function doGet(e) {
   try {
+    // CORS 헤더 설정
+    const headers = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET',
+      'Access-Control-Allow-Headers': 'Content-Type'
+    };
+    
     // 현재 스프레드시트의 "Vocab" 시트에 접근
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Vocab");
     
@@ -23,7 +30,8 @@ function doGet(e) {
         .createTextOutput(JSON.stringify({
           error: "Vocab 시트를 찾을 수 없습니다. 시트 이름을 확인해주세요."
         }))
-        .setMimeType(ContentService.MimeType.JSON);
+        .setMimeType(ContentService.MimeType.JSON)
+        .setHeaders(headers);
     }
     
     // 데이터 범위 가져오기 (첫 번째 행부터 마지막 데이터까지)
@@ -36,7 +44,8 @@ function doGet(e) {
           error: "데이터가 없습니다.",
           data: []
         }))
-        .setMimeType(ContentService.MimeType.JSON);
+        .setMimeType(ContentService.MimeType.JSON)
+        .setHeaders(headers);
     }
     
     // A열(영어단어)과 B열(뜻) 데이터 읽기
@@ -69,7 +78,8 @@ function doGet(e) {
     
     return ContentService
       .createTextOutput(JSON.stringify(response))
-      .setMimeType(ContentService.MimeType.JSON);
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeaders(headers);
       
   } catch (error) {
     // 에러 처리
@@ -79,7 +89,8 @@ function doGet(e) {
         error: error.toString(),
         message: "데이터를 가져오는 중 오류가 발생했습니다."
       }))
-      .setMimeType(ContentService.MimeType.JSON);
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeaders(headers);
   }
 }
 
