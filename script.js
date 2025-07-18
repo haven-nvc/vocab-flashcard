@@ -127,39 +127,60 @@ class FlashcardApp {
             console.log('단어장 데이터 로드 시작...');
             console.log('API URL:', CONFIG.API_URL);
             
-            // CORS 프록시를 사용하여 API 호출
-            const proxyUrl = 'https://api.allorigins.win/raw?url=';
-            const targetUrl = encodeURIComponent(CONFIG.API_URL);
-            const fullUrl = proxyUrl + targetUrl;
-            
-            console.log('프록시 URL:', fullUrl);
-            
-            const response = await fetch(fullUrl, {
-                method: 'GET',
-                mode: 'cors',
-                cache: 'no-cache'
+            // JSONP 방식으로 API 호출 (CORS 완전 우회)
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                const callbackName = 'jsonpCallback_' + Date.now();
+                
+                // 전역 콜백 함수 생성
+                window[callbackName] = (data) => {
+                    console.log('API 응답:', data);
+                    
+                    if (!data.success) {
+                        reject(new Error(data.message || data.error || '알 수 없는 오류'));
+                        return;
+                    }
+                    
+                    if (!data.data || data.data.length === 0) {
+                        reject(new Error(CONFIG.MESSAGES.ERROR_NO_DATA));
+                        return;
+                    }
+                    
+                    this.vocabulary = data.data;
+                    console.log(`${this.vocabulary.length}개의 단어를 로드했습니다.`);
+                    
+                    this.startLearning();
+                    
+                    // 스크립트 태그 제거
+                    document.head.removeChild(script);
+                    delete window[callbackName];
+                    
+                    resolve();
+                };
+                
+                // 에러 처리
+                script.onerror = () => {
+                    document.head.removeChild(script);
+                    delete window[callbackName];
+                    reject(new Error(CONFIG.MESSAGES.ERROR_NETWORK));
+                };
+                
+                // JSONP URL 생성
+                const jsonpUrl = `${CONFIG.API_URL}?callback=${callbackName}`;
+                script.src = jsonpUrl;
+                
+                // 스크립트 로드
+                document.head.appendChild(script);
+                
+                // 타임아웃 설정 (10초)
+                setTimeout(() => {
+                    if (window[callbackName]) {
+                        document.head.removeChild(script);
+                        delete window[callbackName];
+                        reject(new Error('API 호출 타임아웃'));
+                    }
+                }, 10000);
             });
-            console.log('Fetch 응답 상태:', response.status, response.statusText);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            
-            const data = await response.json();
-            console.log('API 응답:', data);
-            
-            if (!data.success) {
-                throw new Error(data.message || data.error || '알 수 없는 오류');
-            }
-            
-            if (!data.data || data.data.length === 0) {
-                throw new Error(CONFIG.MESSAGES.ERROR_NO_DATA);
-            }
-            
-            this.vocabulary = data.data;
-            console.log(`${this.vocabulary.length}개의 단어를 로드했습니다.`);
-            
-            this.startLearning();
             
         } catch (error) {
             console.error('데이터 로드 오류:', error);
@@ -176,8 +197,8 @@ class FlashcardApp {
                 console.warn('기타 오류 감지, 로컬 테스트 데이터 사용');
             }
             
-            // 프록시 실패 시 로컬 데이터 사용
-            console.log('프록시 실패, 로컬 테스트 데이터로 대체');
+            // API 실패 시 로컬 데이터 사용
+            console.log('API 호출 실패, 로컬 테스트 데이터로 대체');
             this.useLocalTestData();
         }
     }
