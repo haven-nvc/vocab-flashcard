@@ -54,17 +54,23 @@ class FlashcardApp {
      */
     async init() {
         console.log('플래시카드 앱 초기화 시작...');
+        console.log('현재 설정:', CONFIG);
         
         // 설정 검증
         if (!validateConfig()) {
+            console.error('설정 검증 실패');
             this.showError('설정 오류: Google Apps Script URL을 config.js에서 설정해주세요.');
             return;
         }
         
+        console.log('설정 검증 통과');
+        
         // 키보드 이벤트 리스너 등록
         this.setupEventListeners();
+        console.log('이벤트 리스너 설정 완료');
         
         // 데이터 로드
+        console.log('데이터 로드 시작...');
         await this.loadVocabulary();
     }
     
@@ -119,8 +125,17 @@ class FlashcardApp {
     async loadVocabulary() {
         try {
             console.log('단어장 데이터 로드 시작...');
+            console.log('API URL:', CONFIG.API_URL);
             
-            const response = await fetch(CONFIG.API_URL);
+            const response = await fetch(CONFIG.API_URL, {
+                method: 'GET',
+                mode: 'cors',
+                cache: 'no-cache',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            console.log('Fetch 응답 상태:', response.status, response.statusText);
             
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -144,7 +159,19 @@ class FlashcardApp {
             
         } catch (error) {
             console.error('데이터 로드 오류:', error);
-            console.warn('API 호출 실패, 로컬 테스트 데이터 사용');
+            console.error('오류 타입:', error.constructor.name);
+            console.error('오류 메시지:', error.message);
+            console.error('오류 스택:', error.stack);
+            
+            // 네트워크 오류인지 확인
+            if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                console.warn('네트워크 오류 감지, 로컬 테스트 데이터 사용');
+            } else if (error.message.includes('CORS')) {
+                console.warn('CORS 오류 감지, 로컬 테스트 데이터 사용');
+            } else {
+                console.warn('기타 오류 감지, 로컬 테스트 데이터 사용');
+            }
+            
             this.useLocalTestData();
         }
     }
