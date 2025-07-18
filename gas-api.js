@@ -15,23 +15,26 @@
  */
 function doGet(e) {
   try {
-    // CORS 헤더 설정
-    const headers = {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET',
-      'Access-Control-Allow-Headers': 'Content-Type'
-    };
+    // JSONP 콜백 함수명 가져오기
+    const callback = e.parameter.callback;
     
     // 현재 스프레드시트의 "Vocab" 시트에 접근
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Vocab");
     
     if (!sheet) {
-      return ContentService
-        .createTextOutput(JSON.stringify({
-          error: "Vocab 시트를 찾을 수 없습니다. 시트 이름을 확인해주세요."
-        }))
-        .setMimeType(ContentService.MimeType.JSON)
-        .setHeaders(headers);
+      const errorResponse = {
+        error: "Vocab 시트를 찾을 수 없습니다. 시트 이름을 확인해주세요."
+      };
+      
+      if (callback) {
+        return ContentService
+          .createTextOutput(`${callback}(${JSON.stringify(errorResponse)})`)
+          .setMimeType(ContentService.MimeType.JAVASCRIPT);
+      } else {
+        return ContentService
+          .createTextOutput(JSON.stringify(errorResponse))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
     }
     
     // 데이터 범위 가져오기 (첫 번째 행부터 마지막 데이터까지)
@@ -39,13 +42,20 @@ function doGet(e) {
     const lastCol = sheet.getLastColumn();
     
     if (lastRow < 1) {
-      return ContentService
-        .createTextOutput(JSON.stringify({
-          error: "데이터가 없습니다.",
-          data: []
-        }))
-        .setMimeType(ContentService.MimeType.JSON)
-        .setHeaders(headers);
+      const emptyResponse = {
+        error: "데이터가 없습니다.",
+        data: []
+      };
+      
+      if (callback) {
+        return ContentService
+          .createTextOutput(`${callback}(${JSON.stringify(emptyResponse)})`)
+          .setMimeType(ContentService.MimeType.JAVASCRIPT);
+      } else {
+        return ContentService
+          .createTextOutput(JSON.stringify(emptyResponse))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
     }
     
     // A열(영어단어)과 B열(뜻) 데이터 읽기
@@ -76,22 +86,47 @@ function doGet(e) {
       timestamp: new Date().toISOString()
     };
     
-    return ContentService
-      .createTextOutput(JSON.stringify(response))
-      .setMimeType(ContentService.MimeType.JSON)
-      .setHeaders(headers);
+    if (callback) {
+      // JSONP 응답
+      return ContentService
+        .createTextOutput(`${callback}(${JSON.stringify(response)})`)
+        .setMimeType(ContentService.MimeType.JAVASCRIPT);
+    } else {
+      // 일반 JSON 응답
+      return ContentService
+        .createTextOutput(JSON.stringify(response))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
       
   } catch (error) {
     // 에러 처리
-    return ContentService
-      .createTextOutput(JSON.stringify({
-        success: false,
-        error: error.toString(),
-        message: "데이터를 가져오는 중 오류가 발생했습니다."
-      }))
-      .setMimeType(ContentService.MimeType.JSON)
-      .setHeaders(headers);
+    const errorResponse = {
+      success: false,
+      error: error.toString(),
+      message: "데이터를 가져오는 중 오류가 발생했습니다."
+    };
+    
+    const callback = e.parameter.callback;
+    
+    if (callback) {
+      return ContentService
+        .createTextOutput(`${callback}(${JSON.stringify(errorResponse)})`)
+        .setMimeType(ContentService.MimeType.JAVASCRIPT);
+    } else {
+      return ContentService
+        .createTextOutput(JSON.stringify(errorResponse))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
   }
+}
+
+/**
+ * CORS 프리플라이트 요청 처리
+ */
+function doOptions(e) {
+  return ContentService
+    .createTextOutput('')
+    .setMimeType(ContentService.MimeType.TEXT);
 }
 
 /**

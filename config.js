@@ -10,7 +10,8 @@ const CONFIG = {
     // Google Apps Script 웹 앱 URL
     // 배포 후 받은 URL을 여기에 입력하세요
     // 예: "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec"
-    API_URL: "https://script.google.com/macros/s/AKfycbwruAJuRgtMyiuFs7fpkFWCsyXmLOi_PpvyZsiqFVdN-c-K-_Ov7hC2SrZKho_ilIPT/exec",
+    // ⚠️ CORS 문제 해결을 위해 새로 배포한 URL로 변경해주세요!
+    API_URL: "https://script.google.com/macros/s/AKfycbyW-Jt4-GZiOra9ZISJvBVuOZxaEQl4msffN7CUyE-_8NBr9nrFCRrpmoIBAjvIf5Q0/exec",
     
     // 앱 설정
     APP_SETTINGS: {
@@ -43,7 +44,8 @@ const CONFIG = {
 
 // 설정 검증 함수
 function validateConfig() {
-    if (CONFIG.API_URL === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
+    if (CONFIG.API_URL === "YOUR_NEW_GOOGLE_APPS_SCRIPT_URL_HERE" || 
+        CONFIG.API_URL === "https://script.google.com/macros/s/AKfycbwruAJuRgtMyiuFs7fpkFWCsyXmLOi_PpvyZsiqFVdN-c-K-_Ov7hC2SrZKho_ilIPT/exec") {
         console.warn("⚠️ 경고: Google Apps Script URL이 설정되지 않았습니다!");
         console.warn("config.js 파일에서 API_URL을 실제 URL로 변경해주세요.");
         return false;

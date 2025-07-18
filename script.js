@@ -120,27 +120,45 @@ class FlashcardApp {
         try {
             console.log('단어장 데이터 로드 시작...');
             
-            const response = await fetch(CONFIG.API_URL);
+            // JSONP 방식으로 API 호출 (CORS 우회)
+            const script = document.createElement('script');
+            const callbackName = 'jsonpCallback_' + Date.now();
             
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
+            // 전역 콜백 함수 생성
+            window[callbackName] = (data) => {
+                console.log('API 응답:', data);
+                
+                if (!data.success) {
+                    throw new Error(data.message || data.error || '알 수 없는 오류');
+                }
+                
+                if (!data.data || data.data.length === 0) {
+                    throw new Error(CONFIG.MESSAGES.ERROR_NO_DATA);
+                }
+                
+                this.vocabulary = data.data;
+                console.log(`${this.vocabulary.length}개의 단어를 로드했습니다.`);
+                
+                this.startLearning();
+                
+                // 스크립트 태그 제거
+                document.head.removeChild(script);
+                delete window[callbackName];
+            };
             
-            const data = await response.json();
-            console.log('API 응답:', data);
+            // 에러 처리
+            script.onerror = () => {
+                document.head.removeChild(script);
+                delete window[callbackName];
+                throw new Error(CONFIG.MESSAGES.ERROR_NETWORK);
+            };
             
-            if (!data.success) {
-                throw new Error(data.message || data.error || '알 수 없는 오류');
-            }
+            // JSONP URL 생성
+            const jsonpUrl = `${CONFIG.API_URL}?callback=${callbackName}`;
+            script.src = jsonpUrl;
             
-            if (!data.data || data.data.length === 0) {
-                throw new Error(CONFIG.MESSAGES.ERROR_NO_DATA);
-            }
-            
-            this.vocabulary = data.data;
-            console.log(`${this.vocabulary.length}개의 단어를 로드했습니다.`);
-            
-            this.startLearning();
+            // 스크립트 로드
+            document.head.appendChild(script);
             
         } catch (error) {
             console.error('데이터 로드 오류:', error);
