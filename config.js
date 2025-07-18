@@ -2,17 +2,12 @@
  * 플래시카드 앱 설정
  * 
  * 사용법:
- * 1. Google Apps Script에서 웹 앱을 배포한 후 받은 URL을 API_URL에 입력
- * 2. 필요시 다른 설정들도 수정 가능
+ * 1. config.secret.js 파일에서 OAuth 클라이언트 ID와 시트 ID를 설정
+ * 2. 구글 스프레드시트에서 A열에 영어단어, B열에 뜻을 입력
+ * 3. 스프레드시트를 "링크가 있는 모든 사용자(보기 가능)"로 공유
  */
 
 const CONFIG = {
-    // Google Apps Script 웹 앱 URL
-    // 배포 후 받은 URL을 여기에 입력하세요
-    // 예: "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec"
-    // ⚠️ CORS 문제 해결을 위해 새로 배포한 URL로 변경해주세요!
-    API_URL: "https://script.google.com/macros/s/AKfycbxo_OYxpvDsiHTArZ1A75mkJ5zeQLbiN6L0mEqmw0vYQXJtAMZCIz9dh4_3q4wzts5V/exec",
-    
     // 앱 설정
     APP_SETTINGS: {
         // 카드 뒤집기 애니메이션 시간 (밀리초)
@@ -35,7 +30,7 @@ const CONFIG = {
     MESSAGES: {
         LOADING: "단어장을 불러오는 중...",
         ERROR_NETWORK: "네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.",
-        ERROR_API: "API 오류가 발생했습니다. URL 설정을 확인해주세요.",
+        ERROR_API: "API 오류가 발생했습니다. 설정을 확인해주세요.",
         ERROR_NO_DATA: "단어장에 데이터가 없습니다.",
         COMPLETION: "모든 단어를 맞췄습니다!",
         COMPLETION_SUBTITLE: "수고하셨습니다! 🎉"
@@ -44,13 +39,9 @@ const CONFIG = {
 
 // 설정 검증 함수
 function validateConfig() {
-    if (CONFIG.API_URL === "YOUR_NEW_GOOGLE_APPS_SCRIPT_URL_HERE")
-        console.warn("⚠️ 경고: Google Apps Script URL이 설정되지 않았습니다!");
-        console.warn("config.js 파일에서 API_URL을 실제 URL로 변경해주세요.");
-        return false;
-    }
+    // OAuth 클라이언트 ID와 시트 ID는 config.secret.js에서 관리
     return true;
-
+}
 
 // 설정을 전역으로 노출
 window.CONFIG = CONFIG;

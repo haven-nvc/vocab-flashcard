@@ -125,62 +125,57 @@ class FlashcardApp {
     async loadVocabulary() {
         try {
             console.log('단어장 데이터 로드 시작...');
-            console.log('API URL:', CONFIG.API_URL);
             
-            // JSONP 방식으로 API 호출 (CORS 완전 우회)
-            return new Promise((resolve, reject) => {
-                const script = document.createElement('script');
-                const callbackName = 'jsonpCallback_' + Date.now();
-                
-                // 전역 콜백 함수 생성
-                window[callbackName] = (data) => {
-                    console.log('API 응답:', data);
-                    
-                    if (!data.success) {
-                        reject(new Error(data.message || data.error || '알 수 없는 오류'));
-                        return;
-                    }
-                    
-                    if (!data.data || data.data.length === 0) {
-                        reject(new Error(CONFIG.MESSAGES.ERROR_NO_DATA));
-                        return;
-                    }
-                    
-                    this.vocabulary = data.data;
-                    console.log(`${this.vocabulary.length}개의 단어를 로드했습니다.`);
-                    
-                    this.startLearning();
-                    
-                    // 스크립트 태그 제거
-                    document.head.removeChild(script);
-                    delete window[callbackName];
-                    
-                    resolve();
-                };
-                
-                // 에러 처리
-                script.onerror = () => {
-                    document.head.removeChild(script);
-                    delete window[callbackName];
-                    reject(new Error(CONFIG.MESSAGES.ERROR_NETWORK));
-                };
-                
-                // JSONP URL 생성
-                const jsonpUrl = `${CONFIG.API_URL}?callback=${callbackName}`;
-                script.src = jsonpUrl;
-                
-                // 스크립트 로드
-                document.head.appendChild(script);
-                
-                // 타임아웃 설정 (10초)
-                setTimeout(() => {
-                    if (window[callbackName]) {
-                        document.head.removeChild(script);
-                        delete window[callbackName];
-                        reject(new Error('API 호출 타임아웃'));
-                    }
-                }, 10000);
+            // OAuth 클라이언트 ID와 시트 정보 확인
+            if (!window.OAuth_CLIENT_ID || window.OAuth_CLIENT_ID === 'YOUR_OAUTH_CLIENT_ID_HERE') {
+                throw new Error('OAuth 클라이언트 ID가 설정되지 않았습니다. config.secret.js를 확인해주세요.');
+            }
+            
+            if (!window.SHEET_ID || window.SHEET_ID === 'YOUR_SHEET_ID_HERE') {
+                throw new Error('시트 ID가 설정되지 않았습니다. config.secret.js를 확인해주세요.');
+            }
+            
+            console.log('OAuth 클라이언트 ID:', window.OAuth_CLIENT_ID);
+            console.log('시트 ID:', window.SHEET_ID);
+            console.log('데이터 범위:', window.DATA_RANGE);
+            
+            // Google Sheets API v4 호출
+            const apiUrl = `${window.SHEETS_API_BASE}/${window.SHEET_ID}/values/${window.DATA_RANGE}?key=${window.OAuth_CLIENT_ID}`;
+            console.log('API URL:', apiUrl);
+            
+            const response = await fetch(apiUrl, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
             });
+            
+            console.log('API 응답 상태:', response.status, response.statusText);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            console.log('API 응답:', data);
+            
+            if (!data.values || data.values.length < 2) {
+                throw new Error('스프레드시트에 데이터가 없습니다. A열에 영어단어, B열에 뜻을 입력해주세요.');
+            }
+            
+            // 첫 번째 행은 헤더로 간주하고 제외, 나머지를 단어 데이터로 변환
+            this.vocabulary = data.values.slice(1).map(row => ({
+                word: String(row[0] || '').trim(),
+                meaning: String(row[1] || '').trim()
+            })).filter(item => item.word && item.meaning); // 빈 행 제거
+            
+            console.log(`${this.vocabulary.length}개의 단어를 로드했습니다.`);
+            
+            if (this.vocabulary.length === 0) {
+                throw new Error('유효한 단어 데이터가 없습니다. A열에 영어단어, B열에 뜻을 입력해주세요.');
+            }
+            
+            this.startLearning();
             
         } catch (error) {
             console.error('데이터 로드 오류:', error);
@@ -198,7 +193,7 @@ class FlashcardApp {
             }
             
             // API 실패 시 로컬 데이터 사용
-            console.log('API 호출 실패, 로컬 테스트 데이터로 대체');
+            console.log('Google Sheets API 호출 실패, 로컬 테스트 데이터로 대체');
             this.useLocalTestData();
         }
     }
