@@ -103,6 +103,29 @@
     <!-- 설정 및 JavaScript 파일들 -->
     <script src="config.js"></script>
     <script>
+        // CONFIG 객체가 제대로 로드되었는지 확인
+        if (typeof CONFIG === 'undefined') {
+            console.error('CONFIG 객체가 로드되지 않았습니다. 기본값을 설정합니다.');
+            window.CONFIG = {
+                APP_SETTINGS: {
+                    FLIP_ANIMATION_DURATION: 300,
+                    AUTO_ADVANCE: false,
+                    AUTO_ADVANCE_DELAY: 2000,
+                    SHUFFLE_CARDS: true,
+                    SAVE_PROGRESS: false
+                },
+                GAS_API_URL: "/api/gas-proxy",
+                MESSAGES: {
+                    LOADING: "단어장을 불러오는 중...",
+                    ERROR_NETWORK: "네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.",
+                    ERROR_API: "API 오류가 발생했습니다. 설정을 확인해주세요.",
+                    ERROR_NO_DATA: "단어장에 데이터가 없습니다.",
+                    COMPLETION: "모든 단어를 맞췄습니다!",
+                    COMPLETION_SUBTITLE: "수고하셨습니다! 🎉"
+                }
+            };
+        }
+        
         // Google Apps Script URL 설정
         if (typeof window.GAS_API_URL === 'undefined') {
             window.GAS_API_URL = CONFIG.GAS_API_URL;

@@ -78,6 +78,14 @@ class FlashcardApp {
      */
     async init() {
         console.log('플래시카드 앱 초기화 시작...');
+        
+        // CONFIG 객체가 정의되었는지 확인
+        if (typeof CONFIG === 'undefined') {
+            console.error('CONFIG 객체가 정의되지 않았습니다.');
+            this.showError('설정 오류: CONFIG 객체를 찾을 수 없습니다.');
+            return;
+        }
+        
         console.log('현재 설정:', CONFIG);
         
         // 설정 검증
@@ -330,7 +338,9 @@ class FlashcardApp {
                 </ul>`;
             }
             
-            this.showError(errorMessage);
+            // API 호출 실패 시 테스트 데이터로 대체
+            console.log('API 호출 실패, 테스트 데이터로 대체합니다.');
+            this.useLocalTestData();
         }
     }
     

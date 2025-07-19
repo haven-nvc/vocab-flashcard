@@ -1,5 +1,4 @@
 const fetch = require('node-fetch');
-require('dotenv').config();
 
 exports.handler = async function(event, context) {
   // CORS 헤더 설정
@@ -20,11 +19,17 @@ exports.handler = async function(event, context) {
   }
 
   try {
+    // 환경변수 디버깅
+    console.log('사용 가능한 환경변수:', Object.keys(process.env));
+    console.log('GAS_WEBAPP_URL 값:', process.env.GAS_WEBAPP_URL);
+    
     // Google Apps Script 웹앱 URL (환경 변수에서 가져옴)
     const GAS_WEBAPP_URL = process.env.GAS_WEBAPP_URL;
     
     if (!GAS_WEBAPP_URL) {
-      throw new Error('GAS_WEBAPP_URL 환경 변수가 설정되지 않았습니다.');
+      console.error('GAS_WEBAPP_URL 환경 변수가 설정되지 않았습니다.');
+      console.error('사용 가능한 환경변수:', Object.keys(process.env));
+      throw new Error('GAS_WEBAPP_URL 환경 변수가 설정되지 않았습니다. Netlify 대시보드에서 환경변수를 설정해주세요.');
     }
     
     // URL 파라미터 추출
