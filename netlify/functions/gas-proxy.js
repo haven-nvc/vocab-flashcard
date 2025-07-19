@@ -1,4 +1,5 @@
 const fetch = require('node-fetch');
+require('dotenv').config();
 
 exports.handler = async function(event, context) {
   // CORS 헤더 설정

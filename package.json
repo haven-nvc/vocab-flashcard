@@ -8,7 +8,8 @@
     "build": "echo 'Static site - no build needed'"
   },
   "dependencies": {
-    "node-fetch": "^2.6.7"
+    "node-fetch": "^2.6.7",
+    "dotenv": "^16.0.0"
   },
   "devDependencies": {
     "netlify-cli": "^12.0.0"
