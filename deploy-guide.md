@@ -6,12 +6,16 @@
 1. `gas-api.js` 파일을 Google Apps Script에 배포
 2. 웹앱 URL 복사 (예: `https://script.google.com/macros/s/AKfycbxpu9oj2KEYWByxP2lUNy6HmXfvHIFQ7ecnnSmDNxqkBre_ZE88vN66DGswrz9QvqM/exec`)
 
-### 1-2. Netlify Functions 설정
-1. `netlify/functions/gas-proxy.js` 파일에서 `GAS_WEBAPP_URL`을 실제 배포된 URL로 변경:
+### 1-2. 환경 변수 설정
+1. `.env` 파일을 생성하고 Google Apps Script 웹앱 URL 설정:
 
-```javascript
-const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
+```bash
+GAS_WEBAPP_URL=https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec
 ```
+
+2. Netlify 대시보드에서 환경 변수 설정:
+   - Site settings → Environment variables
+   - `GAS_WEBAPP_URL` 추가
 
 ## 2. 로컬 테스트
 

@@ -26,8 +26,8 @@ const CONFIG = {
         SAVE_PROGRESS: false
     },
     
-    // Google Apps Script URL (Netlify Functions를 통해 프록시됨)
-    GAS_API_URL: "https://script.google.com/macros/s/AKfycbxpu9oj2KEYWByxP2lUNy6HmXfvHIFQ7ecnnSmDNxqkBre_ZE88vN66DGswrz9QvqM/exec",
+    // Google Apps Script URL (환경 변수에서 가져옴)
+    GAS_API_URL: process.env.GAS_WEBAPP_URL || "/api/gas-proxy",
     
     // UI 텍스트 설정
     MESSAGES: {

@@ -20,8 +20,12 @@ exports.handler = async function(event, context) {
   }
 
   try {
-    // Google Apps Script 웹앱 URL (환경 변수에서 가져오거나 기본값 사용)
-    const GAS_WEBAPP_URL = process.env.GAS_WEBAPP_URL || 'https://script.google.com/macros/s/AKfycbxpu9oj2KEYWByxP2lUNy6HmXfvHIFQ7ecnnSmDNxqkBre_ZE88vN66DGswrz9QvqM/exec';
+    // Google Apps Script 웹앱 URL (환경 변수에서 가져옴)
+    const GAS_WEBAPP_URL = process.env.GAS_WEBAPP_URL;
+    
+    if (!GAS_WEBAPP_URL) {
+      throw new Error('GAS_WEBAPP_URL 환경 변수가 설정되지 않았습니다.');
+    }
     
     // URL 파라미터 추출
     const queryParams = event.queryStringParameters || {};
