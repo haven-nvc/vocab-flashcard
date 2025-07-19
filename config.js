@@ -27,7 +27,7 @@ const CONFIG = {
     },
     
     // Google Apps Script URL (결과 저장용)
-    GAS_API_URL: "https://script.google.com/macros/s/AKfycbx-YKUywuYdDT44KwUSZH7B9AHJGULS1WuZwr8jGqNEvmK7AQ37pJzd26mT4yKbxgLE/exec",
+    GAS_API_URL: "https://script.google.com/macros/s/AKfycbxDmaZ1HPuzxhs29l2mHUT2y7XL4ZoOaiUMNocyNtOCNHJmDqKtm4j_yO2n-H7YH_31/exec",
     
     // UI 텍스트 설정
     MESSAGES: {
