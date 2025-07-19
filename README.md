@@ -147,6 +147,31 @@ vocab-flashcard/
 2. "액세스 권한: 모든 사용자"로 설정했는지 확인
 3. 필요시 새로 배포하여 새 URL 받기
 
+### CORS 오류 해결 방법
+
+**"Access to fetch has been blocked by CORS policy" 오류가 발생하는 경우:**
+
+1. **Google Apps Script 재배포**: 
+   - `gas-api.js` 파일의 최신 버전을 Google Apps Script에 복사
+   - 새로 배포하여 새로운 URL 받기
+   - `config.js`의 `GAS_API_URL` 업데이트
+
+2. **CORS 헤더 확인**:
+   - Google Apps Script에서 CORS 헤더가 추가되었는지 확인
+   - `Access-Control-Allow-Origin: *` 헤더가 포함되어야 함
+
+3. **JSONP 방식 사용**:
+   - 최신 코드는 JSONP 방식을 사용하여 CORS 문제를 우회
+   - 자동으로 JSONP 방식으로 전환됨
+
+4. **브라우저 캐시 삭제**:
+   - 브라우저 캐시를 삭제하고 페이지 새로고침
+   - 개발자 도구에서 "Disable cache" 체크
+
+5. **대안: 로컬 테스트 데이터**:
+   - API 호출 실패 시 자동으로 로컬 테스트 데이터 사용
+   - 20개의 기본 단어로 학습 가능
+
 ## 🛠️ 개발자 정보
 
 ### 기술 스택

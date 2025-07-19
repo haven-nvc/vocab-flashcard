@@ -208,24 +208,13 @@ class FlashcardApp {
                 return;
             }
             
-            // Google Apps Script 호출
+            // Google Apps Script 호출 (JSONP 방식으로 CORS 우회)
             const apiUrl = `${window.GAS_API_URL}?student=${encodeURIComponent(this.studentName)}`;
             console.log('API URL:', apiUrl);
             
-            const response = await fetch(apiUrl, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            });
+            // JSONP 방식으로 데이터 로드 (CORS 우회)
+            const data = await this.loadDataWithJSONP(apiUrl);
             
-            console.log('API 응답 상태:', response.status, response.statusText);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            
-            const data = await response.json();
             console.log('API 응답:', data);
             
             if (!data.success) {
@@ -256,11 +245,18 @@ class FlashcardApp {
             console.error('오류 메시지:', error.message);
             console.error('오류 스택:', error.stack);
             
-            // 네트워크 오류인지 확인
-            if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                console.warn('네트워크 오류 감지, 로컬 테스트 데이터 사용');
-            } else if (error.message.includes('CORS')) {
-                console.warn('CORS 오류 감지, 로컬 테스트 데이터 사용');
+            // CORS 오류 및 네트워크 오류 감지
+            const isCorsError = error.message.includes('CORS') || 
+                               error.message.includes('Failed to fetch') ||
+                               error.message.includes('Access to fetch');
+            
+            const isNetworkError = error.name === 'TypeError' && 
+                                 (error.message.includes('fetch') || 
+                                  error.message.includes('Failed to fetch'));
+            
+            if (isCorsError || isNetworkError) {
+                console.warn('CORS 또는 네트워크 오류 감지, 로컬 테스트 데이터 사용');
+                console.warn('해결 방법: Google Apps Script를 새로 배포하고 CORS 헤더가 추가되었는지 확인하세요.');
             } else {
                 console.warn('기타 오류 감지, 로컬 테스트 데이터 사용');
             }
@@ -269,6 +265,50 @@ class FlashcardApp {
             console.log('Google Apps Script 호출 실패, 로컬 테스트 데이터로 대체');
             this.useLocalTestData();
         }
+    }
+    
+    /**
+     * JSONP 방식으로 데이터 로드 (CORS 우회)
+     */
+    loadDataWithJSONP(url) {
+        return new Promise((resolve, reject) => {
+            // 고유한 콜백 함수명 생성
+            const callbackName = 'jsonpCallback_' + Math.random().toString(36).substr(2, 9);
+            
+            // 전역 콜백 함수 생성
+            window[callbackName] = (data) => {
+                // 스크립트 태그 제거
+                document.head.removeChild(script);
+                // 전역 함수 제거
+                delete window[callbackName];
+                
+                if (data.success) {
+                    resolve(data);
+                } else {
+                    reject(new Error(data.error || '데이터를 가져올 수 없습니다.'));
+                }
+            };
+            
+            // 스크립트 태그 생성 및 추가
+            const script = document.createElement('script');
+            script.src = `${url}&callback=${callbackName}`;
+            script.onerror = () => {
+                document.head.removeChild(script);
+                delete window[callbackName];
+                reject(new Error('JSONP 요청 실패'));
+            };
+            
+            document.head.appendChild(script);
+            
+            // 타임아웃 설정 (10초)
+            setTimeout(() => {
+                if (window[callbackName]) {
+                    document.head.removeChild(script);
+                    delete window[callbackName];
+                    reject(new Error('JSONP 요청 타임아웃'));
+                }
+            }, 10000);
+        });
     }
     
     /**

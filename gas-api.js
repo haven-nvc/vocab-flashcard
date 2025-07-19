@@ -15,6 +15,14 @@
  */
 function doGet(e) {
   try {
+    // CORS 헤더 설정
+    const headers = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Max-Age': '86400'
+    };
+    
     // JSONP 콜백 함수명 가져오기
     const callback = e.parameter.callback;
     
@@ -32,11 +40,13 @@ function doGet(e) {
       if (callback) {
         return ContentService
           .createTextOutput(`${callback}(${JSON.stringify(errorResponse)})`)
-          .setMimeType(ContentService.MimeType.JAVASCRIPT);
+          .setMimeType(ContentService.MimeType.JAVASCRIPT)
+          .setHeaders(headers);
       } else {
         return ContentService
           .createTextOutput(JSON.stringify(errorResponse))
-          .setMimeType(ContentService.MimeType.JSON);
+          .setMimeType(ContentService.MimeType.JSON)
+          .setHeaders(headers);
       }
     }
     
@@ -53,11 +63,13 @@ function doGet(e) {
       if (callback) {
         return ContentService
           .createTextOutput(`${callback}(${JSON.stringify(emptyResponse)})`)
-          .setMimeType(ContentService.MimeType.JAVASCRIPT);
+          .setMimeType(ContentService.MimeType.JAVASCRIPT)
+          .setHeaders(headers);
       } else {
         return ContentService
           .createTextOutput(JSON.stringify(emptyResponse))
-          .setMimeType(ContentService.MimeType.JSON);
+          .setMimeType(ContentService.MimeType.JSON)
+          .setHeaders(headers);
       }
     }
     
@@ -93,12 +105,14 @@ function doGet(e) {
       // JSONP 응답
       return ContentService
         .createTextOutput(`${callback}(${JSON.stringify(response)})`)
-        .setMimeType(ContentService.MimeType.JAVASCRIPT);
+        .setMimeType(ContentService.MimeType.JAVASCRIPT)
+        .setHeaders(headers);
     } else {
       // 일반 JSON 응답
       return ContentService
         .createTextOutput(JSON.stringify(response))
-        .setMimeType(ContentService.MimeType.JSON);
+        .setMimeType(ContentService.MimeType.JSON)
+        .setHeaders(headers);
     }
       
   } catch (error) {
@@ -110,15 +124,23 @@ function doGet(e) {
     };
     
     const callback = e.parameter.callback;
+    const headers = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Max-Age': '86400'
+    };
     
     if (callback) {
       return ContentService
         .createTextOutput(`${callback}(${JSON.stringify(errorResponse)})`)
-        .setMimeType(ContentService.MimeType.JAVASCRIPT);
+        .setMimeType(ContentService.MimeType.JAVASCRIPT)
+        .setHeaders(headers);
     } else {
       return ContentService
         .createTextOutput(JSON.stringify(errorResponse))
-        .setMimeType(ContentService.MimeType.JSON);
+        .setMimeType(ContentService.MimeType.JSON)
+        .setHeaders(headers);
     }
   }
 }
@@ -129,6 +151,14 @@ function doGet(e) {
  */
 function doPost(e) {
   try {
+    // CORS 헤더 설정
+    const headers = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Max-Age': '86400'
+    };
+    
     // 요청 본문 파싱
     const postData = JSON.parse(e.postData.contents);
     const { studentName, correctCount, incorrectCount } = postData;
@@ -136,7 +166,8 @@ function doPost(e) {
     if (!studentName) {
       return ContentService
         .createTextOutput(JSON.stringify({ success: false, error: "학생 이름이 필요합니다." }))
-        .setMimeType(ContentService.MimeType.JSON);
+        .setMimeType(ContentService.MimeType.JSON)
+        .setHeaders(headers);
     }
     
     // 해당 학생의 시트에 접근
@@ -145,7 +176,8 @@ function doPost(e) {
     if (!sheet) {
       return ContentService
         .createTextOutput(JSON.stringify({ success: false, error: `${studentName} 시트를 찾을 수 없습니다.` }))
-        .setMimeType(ContentService.MimeType.JSON);
+        .setMimeType(ContentService.MimeType.JSON)
+        .setHeaders(headers);
     }
     
     // 현재 날짜
@@ -182,7 +214,8 @@ function doPost(e) {
     
     return ContentService
       .createTextOutput(JSON.stringify(response))
-      .setMimeType(ContentService.MimeType.JSON);
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeaders(headers);
       
   } catch (error) {
     const errorResponse = {
@@ -191,9 +224,17 @@ function doPost(e) {
       message: "결과 저장 중 오류가 발생했습니다."
     };
     
+    const headers = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Max-Age': '86400'
+    };
+    
     return ContentService
       .createTextOutput(JSON.stringify(errorResponse))
-      .setMimeType(ContentService.MimeType.JSON);
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeaders(headers);
   }
 }
 
@@ -201,9 +242,17 @@ function doPost(e) {
  * CORS 프리플라이트 요청 처리
  */
 function doOptions(e) {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Max-Age': '86400'
+  };
+  
   return ContentService
     .createTextOutput('')
-    .setMimeType(ContentService.MimeType.TEXT);
+    .setMimeType(ContentService.MimeType.TEXT)
+    .setHeaders(headers);
 }
 
 /**
