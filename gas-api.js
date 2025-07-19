@@ -1,6 +1,6 @@
 /**
  * Google Apps Script 웹 API
- * 구글 스프레드시트의 "Vocab" 시트에서 단어장 데이터를 JSON으로 제공
+ * 구글 스프레드시트의 학생별 탭에서 단어장 데이터를 JSON으로 제공하고 결과를 저장
  * 
  * 배포 방법:
  * 1. Google Apps Script (script.google.com)에서 새 프로젝트 생성
@@ -18,12 +18,15 @@ function doGet(e) {
     // JSONP 콜백 함수명 가져오기
     const callback = e.parameter.callback;
     
-    // 현재 스프레드시트의 "Vocab" 시트에 접근
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Vocab");
+    // URL 파라미터에서 학생 이름 가져오기
+    const studentName = e.parameter.student || "Vocab";
+    
+    // 현재 스프레드시트의 학생별 시트에 접근
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(studentName);
     
     if (!sheet) {
       const errorResponse = {
-        error: "Vocab 시트를 찾을 수 없습니다. 시트 이름을 확인해주세요."
+        error: `${studentName} 시트를 찾을 수 없습니다. 시트 이름을 확인해주세요.`
       };
       
       if (callback) {
@@ -117,6 +120,80 @@ function doGet(e) {
         .createTextOutput(JSON.stringify(errorResponse))
         .setMimeType(ContentService.MimeType.JSON);
     }
+  }
+}
+
+/**
+ * HTTP POST 요청을 처리하는 함수
+ * 학습 결과를 스프레드시트에 저장
+ */
+function doPost(e) {
+  try {
+    // 요청 본문 파싱
+    const postData = JSON.parse(e.postData.contents);
+    const { studentName, correctCount, incorrectCount } = postData;
+    
+    if (!studentName) {
+      return ContentService
+        .createTextOutput(JSON.stringify({ success: false, error: "학생 이름이 필요합니다." }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    // 해당 학생의 시트에 접근
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(studentName);
+    
+    if (!sheet) {
+      return ContentService
+        .createTextOutput(JSON.stringify({ success: false, error: `${studentName} 시트를 찾을 수 없습니다.` }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    // 현재 날짜
+    const today = new Date();
+    const dateString = today.toISOString().split('T')[0]; // YYYY-MM-DD 형식
+    
+    // C열과 D열에 결과 저장 (날짜, 맞은 개수, 틀린 개수)
+    const lastRow = sheet.getLastRow();
+    const nextRow = lastRow + 1;
+    
+    // 헤더가 없는 경우 헤더 추가
+    if (lastRow === 0) {
+      sheet.getRange(1, 3).setValue("날짜");
+      sheet.getRange(1, 4).setValue("맞은 개수");
+      sheet.getRange(1, 5).setValue("틀린 개수");
+    }
+    
+    // 데이터 저장
+    const dataRow = lastRow === 0 ? 2 : nextRow;
+    sheet.getRange(dataRow, 3).setValue(dateString);
+    sheet.getRange(dataRow, 4).setValue(correctCount || 0);
+    sheet.getRange(dataRow, 5).setValue(incorrectCount || 0);
+    
+    const response = {
+      success: true,
+      message: "결과가 성공적으로 저장되었습니다.",
+      data: {
+        studentName,
+        date: dateString,
+        correctCount: correctCount || 0,
+        incorrectCount: incorrectCount || 0
+      }
+    };
+    
+    return ContentService
+      .createTextOutput(JSON.stringify(response))
+      .setMimeType(ContentService.MimeType.JSON);
+      
+  } catch (error) {
+    const errorResponse = {
+      success: false,
+      error: error.toString(),
+      message: "결과 저장 중 오류가 발생했습니다."
+    };
+    
+    return ContentService
+      .createTextOutput(JSON.stringify(errorResponse))
+      .setMimeType(ContentService.MimeType.JSON);
   }
 }
 

@@ -20,6 +20,8 @@
         <button onclick="location.reload()">다시 시도</button>
     </div>
 
+
+
     <!-- 메인 앱 화면 -->
     <div id="app" class="app hidden">
         <!-- 헤더 -->
@@ -82,6 +84,14 @@
                     <span id="total-studied" class="stat-value">0</span>개
                 </div>
                 <div class="stat">
+                    <span class="stat-label">맞은 개수:</span>
+                    <span id="correct-count" class="stat-value">0</span>개
+                </div>
+                <div class="stat">
+                    <span class="stat-label">틀린 개수:</span>
+                    <span id="incorrect-count" class="stat-value">0</span>개
+                </div>
+                <div class="stat">
                     <span class="stat-label">소요 시간:</span>
                     <span id="study-time" class="stat-value">0</span>분
                 </div>
@@ -92,7 +102,13 @@
 
     <!-- 설정 및 JavaScript 파일들 -->
     <script src="config.js"></script>
-    <script src="config.secret.js"></script>
+    <script>
+        // Google Apps Script URL 설정
+        if (typeof window.GAS_API_URL === 'undefined') {
+            window.GAS_API_URL = CONFIG.GAS_API_URL;
+        }
+    </script>
+
     <script src="script.js"></script>
 </body>
 </html> 

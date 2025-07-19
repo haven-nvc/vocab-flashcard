@@ -2,7 +2,7 @@
  * 플래시카드 앱 설정
  * 
  * 사용법:
- * 1. config.secret.js 파일에서 OAuth 클라이언트 ID와 시트 ID를 설정
+ * 1. gas-api.js를 Google Apps Script에 배포하여 GAS_API_URL 설정
  * 2. 구글 스프레드시트에서 A열에 영어단어, B열에 뜻을 입력
  * 3. 스프레드시트를 "링크가 있는 모든 사용자(보기 가능)"로 공유
  */
@@ -25,6 +25,9 @@ const CONFIG = {
         // 진행률 저장 (localStorage 사용)
         SAVE_PROGRESS: false
     },
+    
+    // Google Apps Script URL (결과 저장용)
+    GAS_API_URL: "https://script.google.com/macros/s/AKfycbx-YKUywuYdDT44KwUSZH7B9AHJGULS1WuZwr8jGqNEvmK7AQ37pJzd26mT4yKbxgLE/exec",
     
     // UI 텍스트 설정
     MESSAGES: {

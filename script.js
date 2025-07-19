@@ -19,6 +19,14 @@ class FlashcardApp {
         this.totalStudied = 0; // 총 학습한 단어 수
         this.startTime = null; // 학습 시작 시간
         
+        // 학습 결과 추적
+        this.correctCount = 0; // 맞은 개수
+        this.incorrectCount = 0; // 틀린 개수
+        
+        // URL 파라미터에서 학생 정보 읽기
+        this.studentName = this.getStudentNameFromURL();
+        console.log('학생 이름:', this.studentName);
+        
         // DOM 요소들
         this.elements = {
             loading: document.getElementById('loading'),
@@ -50,6 +58,22 @@ class FlashcardApp {
     }
     
     /**
+     * URL에서 학생 이름 읽기
+     */
+    getStudentNameFromURL() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const student = urlParams.get('student');
+        
+        if (!student) {
+            // URL 파라미터가 없으면 기본값 사용
+            console.warn('URL에 student 파라미터가 없습니다. 기본값 "Vocab"을 사용합니다.');
+            return 'Vocab';
+        }
+        
+        return student;
+    }
+    
+    /**
      * 앱 초기화
      */
     async init() {
@@ -65,6 +89,9 @@ class FlashcardApp {
         
         console.log('설정 검증 통과');
         
+        // 사운드 효과 초기화
+        this.initSoundEffects();
+        
         // 키보드 이벤트 리스너 등록
         this.setupEventListeners();
         console.log('이벤트 리스너 설정 완료');
@@ -72,6 +99,42 @@ class FlashcardApp {
         // 데이터 로드
         console.log('데이터 로드 시작...');
         await this.loadVocabulary();
+    }
+    
+    /**
+     * 사운드 효과 초기화
+     */
+    initSoundEffects() {
+        // 맞춤 사운드 (Web Audio API 사용)
+        this.correctSound = this.createTone(800, 0.3, 'sine'); // 높은 톤
+        this.incorrectSound = this.createTone(200, 0.3, 'sawtooth'); // 낮은 톤
+    }
+    
+    /**
+     * 톤 생성 (Web Audio API)
+     */
+    createTone(frequency, duration, type = 'sine') {
+        return () => {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = frequency;
+                oscillator.type = type;
+                
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + duration);
+            } catch (error) {
+                console.log('사운드 재생 실패:', error);
+            }
+        };
     }
     
     /**
@@ -136,22 +199,17 @@ class FlashcardApp {
     async loadVocabulary() {
         try {
             console.log('단어장 데이터 로드 시작...');
+            console.log('학생 이름:', this.studentName);
             
-            // OAuth 클라이언트 ID와 시트 정보 확인
-            if (!window.OAuth_CLIENT_ID || window.OAuth_CLIENT_ID === 'YOUR_OAUTH_CLIENT_ID_HERE') {
-                throw new Error('OAuth 클라이언트 ID가 설정되지 않았습니다. config.secret.js를 확인해주세요.');
+            // Google Apps Script URL 확인
+            if (!window.GAS_API_URL || window.GAS_API_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+                console.warn('Google Apps Script URL이 설정되지 않았습니다. 로컬 테스트 데이터를 사용합니다.');
+                this.useLocalTestData();
+                return;
             }
             
-            if (!window.SHEET_ID || window.SHEET_ID === 'YOUR_SHEET_ID_HERE') {
-                throw new Error('시트 ID가 설정되지 않았습니다. config.secret.js를 확인해주세요.');
-            }
-            
-            console.log('OAuth 클라이언트 ID:', window.OAuth_CLIENT_ID);
-            console.log('시트 ID:', window.SHEET_ID);
-            console.log('데이터 범위:', window.DATA_RANGE);
-            
-            // Google Sheets API v4 호출
-            const apiUrl = `${window.SHEETS_API_BASE}/${window.SHEET_ID}/values/${window.DATA_RANGE}?key=${window.OAuth_CLIENT_ID}`;
+            // Google Apps Script 호출
+            const apiUrl = `${window.GAS_API_URL}?student=${encodeURIComponent(this.studentName)}`;
             console.log('API URL:', apiUrl);
             
             const response = await fetch(apiUrl, {
@@ -170,14 +228,18 @@ class FlashcardApp {
             const data = await response.json();
             console.log('API 응답:', data);
             
-            if (!data.values || data.values.length < 2) {
+            if (!data.success) {
+                throw new Error(data.error || '데이터를 가져올 수 없습니다.');
+            }
+            
+            if (!data.data || data.data.length === 0) {
                 throw new Error('스프레드시트에 데이터가 없습니다. A열에 영어단어, B열에 뜻을 입력해주세요.');
             }
             
-            // 첫 번째 행은 헤더로 간주하고 제외, 나머지를 단어 데이터로 변환
-            this.vocabulary = data.values.slice(1).map(row => ({
-                word: String(row[0] || '').trim(),
-                meaning: String(row[1] || '').trim()
+            // 단어 데이터 변환
+            this.vocabulary = data.data.map(item => ({
+                word: String(item.word || '').trim(),
+                meaning: String(item.meaning || '').trim()
             })).filter(item => item.word && item.meaning); // 빈 행 제거
             
             console.log(`${this.vocabulary.length}개의 단어를 로드했습니다.`);
@@ -204,7 +266,7 @@ class FlashcardApp {
             }
             
             // API 실패 시 로컬 데이터 사용
-            console.log('Google Sheets API 호출 실패, 로컬 테스트 데이터로 대체');
+            console.log('Google Apps Script 호출 실패, 로컬 테스트 데이터로 대체');
             this.useLocalTestData();
         }
     }
@@ -267,6 +329,9 @@ class FlashcardApp {
         this.showApp();
         this.updateProgress();
         this.displayCurrentCard();
+        
+        // 학생 이름 표시
+        this.updateStudentName();
     }
     
     /**
@@ -350,16 +415,34 @@ class FlashcardApp {
     markCorrect() {
         console.log('정답 처리: 카드 제거');
         
-        // 현재 카드를 목록에서 제거
-        this.currentCards.splice(this.currentIndex, 1);
-        
-        // 인덱스 조정
-        if (this.currentIndex >= this.currentCards.length) {
-            this.currentIndex = 0;
+        // 맞춤 사운드 재생
+        if (this.correctSound) {
+            this.correctSound();
         }
         
-        // 다음 카드 표시
-        this.displayCurrentCard();
+        // 맞춤 효과 적용
+        this.elements.flashcard.classList.add('correct');
+        
+        // 맞은 개수 증가
+        this.correctCount++;
+        console.log(`맞은 개수: ${this.correctCount}`);
+        
+        // 애니메이션 완료 후 카드 제거
+        setTimeout(() => {
+            // 현재 카드를 목록에서 제거
+            this.currentCards.splice(this.currentIndex, 1);
+            
+            // 인덱스 조정
+            if (this.currentIndex >= this.currentCards.length) {
+                this.currentIndex = 0;
+            }
+            
+            // 효과 클래스 제거
+            this.elements.flashcard.classList.remove('correct');
+            
+            // 다음 카드 표시
+            this.displayCurrentCard();
+        }, 800); // 애니메이션 시간과 동일
     }
     
     /**
@@ -368,18 +451,36 @@ class FlashcardApp {
     markIncorrect() {
         console.log('오답 처리: 카드를 맨 뒤로 이동');
         
-        // 현재 카드를 맨 뒤로 이동
-        const currentCard = this.currentCards[this.currentIndex];
-        this.currentCards.splice(this.currentIndex, 1);
-        this.currentCards.push(currentCard);
-        
-        // 인덱스 조정
-        if (this.currentIndex >= this.currentCards.length) {
-            this.currentIndex = 0;
+        // 틀림 사운드 재생
+        if (this.incorrectSound) {
+            this.incorrectSound();
         }
         
-        // 다음 카드 표시
-        this.displayCurrentCard();
+        // 틀림 효과 적용
+        this.elements.flashcard.classList.add('incorrect');
+        
+        // 틀린 개수 증가
+        this.incorrectCount++;
+        console.log(`틀린 개수: ${this.incorrectCount}`);
+        
+        // 애니메이션 완료 후 카드 이동
+        setTimeout(() => {
+            // 현재 카드를 맨 뒤로 이동
+            const currentCard = this.currentCards[this.currentIndex];
+            this.currentCards.splice(this.currentIndex, 1);
+            this.currentCards.push(currentCard);
+            
+            // 인덱스 조정
+            if (this.currentIndex >= this.currentCards.length) {
+                this.currentIndex = 0;
+            }
+            
+            // 효과 클래스 제거
+            this.elements.flashcard.classList.remove('incorrect');
+            
+            // 다음 카드 표시
+            this.displayCurrentCard();
+        }, 800); // 애니메이션 시간과 동일
     }
     
     /**
@@ -403,6 +504,56 @@ class FlashcardApp {
     }
     
     /**
+     * 학생 이름 표시
+     */
+    updateStudentName() {
+        const header = document.querySelector('.header h1');
+        if (header && this.studentName) {
+            header.textContent = `📚 ${this.studentName}의 영어 단어 플래시카드`;
+        }
+    }
+    
+    /**
+     * 학습 결과를 Google Apps Script를 통해 저장
+     */
+    async saveResultsToSheet() {
+        try {
+            console.log('학습 결과를 시트에 저장 중...');
+            console.log(`학생: ${this.studentName}, 맞은 개수: ${this.correctCount}, 틀린 개수: ${this.incorrectCount}`);
+            
+            // Google Apps Script URL 확인
+            if (!window.GAS_API_URL) {
+                console.warn('Google Apps Script URL이 설정되지 않아 결과를 저장할 수 없습니다.');
+                return;
+            }
+            
+            // POST 요청으로 결과 전송
+            const response = await fetch(window.GAS_API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    studentName: this.studentName,
+                    correctCount: this.correctCount,
+                    incorrectCount: this.incorrectCount
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const result = await response.json();
+            console.log('결과 저장 성공:', result);
+            
+        } catch (error) {
+            console.error('결과 저장 실패:', error);
+            // 에러가 발생해도 앱은 계속 작동
+        }
+    }
+    
+    /**
      * 학습 완료 처리
      */
     showCompletion() {
@@ -415,14 +566,22 @@ class FlashcardApp {
         this.elements.totalStudied.textContent = this.totalStudied;
         this.elements.studyTime.textContent = studyTimeMinutes;
         
+        // 맞은 개수와 틀린 개수 표시
+        const correctCountElement = document.getElementById('correct-count');
+        const incorrectCountElement = document.getElementById('incorrect-count');
+        if (correctCountElement) correctCountElement.textContent = this.correctCount;
+        if (incorrectCountElement) incorrectCountElement.textContent = this.incorrectCount;
+        
         // 화면 전환
         this.elements.app.classList.add('hidden');
         this.elements.completion.classList.remove('hidden');
         
-        // 축하 메시지
-        setTimeout(() => {
+        // 학습 결과를 Google Apps Script를 통해 저장
+        this.saveResultsToSheet().then(() => {
             console.log('🎉 축하합니다! 모든 단어를 학습했습니다!');
-        }, 500);
+        }).catch(() => {
+            console.log('🎉 축하합니다! 모든 단어를 학습했습니다! (결과 저장 실패)');
+        });
     }
     
     /**

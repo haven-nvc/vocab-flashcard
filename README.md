@@ -4,9 +4,11 @@
 
 ## ✨ 주요 기능
 
-- 🔄 **구글 스프레드시트 연동**: "Vocab" 시트에서 영어단어와 뜻을 자동으로 가져옵니다
+- 🔄 **구글 스프레드시트 연동**: 학생별 탭에서 영어단어와 뜻을 자동으로 가져옵니다
+- 👥 **학생별 개별 학습**: URL 파라미터로 각 학생의 단어장을 구분합니다
+- 📊 **학습 결과 자동 저장**: 맞은 개수와 틀린 개수를 Google Sheets에 자동 기록
 - ⌨️ **키보드 조작**: Space키로 뜻 보기, 좌우 방향키로 정답/오답 처리
-- 📊 **진행률 추적**: 실시간으로 학습 진행률을 표시합니다
+- 📈 **진행률 추적**: 실시간으로 학습 진행률을 표시합니다
 - 🎯 **적응형 학습**: 틀린 단어는 다시 나타나고, 맞춘 단어는 제거됩니다
 - 📱 **반응형 디자인**: 모바일과 데스크톱에서 모두 사용 가능합니다
 - 🆓 **완전 무료**: GitHub Pages와 Google Apps Script로 무료 호스팅
@@ -16,8 +18,8 @@
 ### 1단계: 구글 스프레드시트 준비
 
 1. 새 구글 스프레드시트를 생성합니다
-2. 시트 이름을 **"Vocab"**으로 변경합니다
-3. 다음과 같이 데이터를 입력합니다:
+2. 학생별로 탭(시트)을 만듭니다 (예: "김철수", "이영희", "박민수")
+3. 각 탭에 다음과 같이 데이터를 입력합니다:
 
 ```
 A열(영어단어)  |  B열(뜻)
@@ -33,29 +35,19 @@ orange        |  오렌지
 1. [Google Apps Script](https://script.google.com)에 접속합니다
 2. **새 프로젝트**를 클릭합니다
 3. `gas-api.js` 파일의 내용을 복사하여 붙여넣습니다
-4. **프로젝트 설정 > 스크립트 속성**에서 스프레드시트를 연결합니다:
-   - 스프레드시트 메뉴에서 **확장 프로그램 > Apps Script** 클릭
-   - 또는 스프레드시트 URL을 스크립트에서 직접 참조
-5. **배포 > 새 배포**를 클릭합니다
-6. **유형 선택 > 웹 앱**을 선택합니다
-7. 설정값:
+4. **배포 > 새 배포**를 클릭합니다
+5. **유형 선택 > 웹 앱**을 선택합니다
+6. 설정값:
    - **실행자**: 나
    - **액세스 권한**: 모든 사용자
-8. **배포** 버튼을 클릭하고 **웹 앱 URL**을 복사해둡니다
+7. **배포** 버튼을 클릭하고 **웹 앱 URL**을 복사해둡니다
+8. `config.js` 파일의 `GAS_API_URL`에 복사한 URL을 설정합니다
 
-### 3단계: 웹앱 설정
+### 3단계: 스프레드시트 연결
 
-1. `config.js` 파일을 열어서 다음 부분을 수정합니다:
-
-```javascript
-API_URL: "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE"
-```
-
-2. 2단계에서 복사한 웹 앱 URL로 교체합니다:
-
-```javascript
-API_URL: "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec"
-```
+1. Google Apps Script 프로젝트에서 스프레드시트를 연결합니다:
+   - **리소스 > 고급 Google 서비스**에서 **Google Sheets API** 활성화
+   - 또는 스프레드시트에서 **확장 프로그램 > Apps Script** 클릭하여 연결
 
 ### 4단계: GitHub Pages 배포
 
@@ -71,6 +63,27 @@ API_URL: "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec"
 5. **Branch**를 **main**으로 선택합니다
 6. **Save** 버튼을 클릭합니다
 7. 몇 분 후 `https://YOUR_USERNAME.github.io/YOUR_REPOSITORY_NAME`에서 접속 가능합니다
+
+## 👥 학생별 사용법
+
+### 학생 접속 URL
+
+각 학생은 자신의 이름으로 URL에 접속합니다:
+
+```
+https://YOUR_USERNAME.github.io/YOUR_REPOSITORY_NAME/?student=김철수
+https://YOUR_USERNAME.github.io/YOUR_REPOSITORY_NAME/?student=이영희
+https://YOUR_USERNAME.github.io/YOUR_REPOSITORY_NAME/?student=박민수
+```
+
+### URL 파라미터
+
+- `student`: 학생 이름 (Google Sheets의 탭 이름과 일치해야 함)
+- 예시: `?student=김철수` → "김철수" 탭의 단어장을 로드
+
+### 기본값
+
+URL에 `student` 파라미터가 없으면 "Vocab" 탭을 사용합니다.
 
 ## 📖 사용법
 

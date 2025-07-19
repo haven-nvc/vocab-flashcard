@@ -160,6 +160,87 @@ body {
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
 }
 
+/* 맞춤 효과 */
+.flashcard.correct {
+    animation: correctAnswer 0.8s ease-out;
+    background: linear-gradient(135deg, #4CAF50, #81C784);
+    color: white;
+}
+
+.flashcard.correct .word,
+.flashcard.correct .meaning {
+    color: white;
+}
+
+/* 틀림 효과 */
+.flashcard.incorrect {
+    animation: incorrectAnswer 0.8s ease-out;
+    background: linear-gradient(135deg, #f44336, #e57373);
+    color: white;
+}
+
+.flashcard.incorrect .word,
+.flashcard.incorrect .meaning {
+    color: white;
+}
+
+/* 맞춤 애니메이션 */
+@keyframes correctAnswer {
+    0% {
+        transform: scale(1) rotate(0deg);
+        background: white;
+    }
+    20% {
+        transform: scale(1.05) rotate(2deg);
+        background: #4CAF50;
+    }
+    40% {
+        transform: scale(1.1) rotate(-2deg);
+        background: #4CAF50;
+    }
+    60% {
+        transform: scale(1.05) rotate(1deg);
+        background: #4CAF50;
+    }
+    80% {
+        transform: scale(0.95) rotate(-1deg);
+        background: #4CAF50;
+    }
+    100% {
+        transform: scale(0.8) rotate(0deg);
+        opacity: 0;
+        background: #4CAF50;
+    }
+}
+
+/* 틀림 애니메이션 */
+@keyframes incorrectAnswer {
+    0% {
+        transform: scale(1) rotate(0deg);
+        background: white;
+    }
+    20% {
+        transform: scale(1.05) rotate(-2deg);
+        background: #f44336;
+    }
+    40% {
+        transform: scale(1.1) rotate(2deg);
+        background: #f44336;
+    }
+    60% {
+        transform: scale(1.05) rotate(-1deg);
+        background: #f44336;
+    }
+    80% {
+        transform: scale(0.95) rotate(1deg);
+        background: #f44336;
+    }
+    100% {
+        transform: scale(1) rotate(0deg);
+        background: white;
+    }
+}
+
 .card-content {
     text-align: center;
     flex: 1;
