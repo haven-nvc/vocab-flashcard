@@ -21,7 +21,37 @@ Google Sheets를 활용한 영어 단어 플래시카드 웹앱입니다.
 5. 실행 권한: "나", 액세스 권한: "모든 사용자"로 설정
 6. 배포 URL 복사
 
-### 2. 설정 파일 수정
+### 2. Netlify Functions 설정 (CORS 문제 해결)
+
+이 프로젝트는 CORS 문제를 해결하기 위해 Netlify Functions를 사용합니다:
+
+#### 2-1. Netlify Functions 설정
+
+1. `netlify/functions/gas-proxy.js` 파일에서 `GAS_WEBAPP_URL`을 실제 배포된 Google Apps Script URL로 변경:
+
+```javascript
+const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
+```
+
+#### 2-2. 의존성 설치
+
+```bash
+npm install
+```
+
+#### 2-3. 로컬 개발 서버 실행
+
+```bash
+npm run dev
+```
+
+#### 2-4. Netlify 배포
+
+1. [Netlify](https://netlify.com)에 가입/로그인
+2. GitHub 저장소 연결 또는 파일 업로드
+3. 자동 배포 완료
+
+### 3. 설정 파일 수정
 
 `config.js` 파일에서 `GAS_API_URL`을 배포한 URL로 변경:
 
@@ -29,7 +59,7 @@ Google Sheets를 활용한 영어 단어 플래시카드 웹앱입니다.
 GAS_API_URL: "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec"
 ```
 
-### 3. Google Sheets 설정
+### 4. Google Sheets 설정
 
 1. 새 Google Sheets 생성
 2. 시트 이름을 학생 이름으로 설정 (예: "Vocab", "John", "Mary")
@@ -41,11 +71,30 @@ GAS_API_URL: "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec"
 
 ### CORS 오류란?
 
-CORS(Cross-Origin Resource Sharing) 오류는 웹 브라우저의 보안 정책으로 인해 발생하는 오류입니다. 다른 도메인에서 리소스를 요청할 때 발생합니다.
+CORS(Cross-Origin Resource Sharing) 오류는 웹 브라우저의 보안 정책으로 인해 발생하는 오류입니다. Google Apps Script는 CORS preflight 요청(OPTIONS)에 응답하지 않아 브라우저에서 차단됩니다.
 
-### 해결 방법: 텍스트 형식 사용
+### 해결 방법: Netlify Functions 프록시
 
-이 프로젝트는 CORS 문제를 해결하기 위해 **텍스트 형식**으로 데이터를 주고받습니다:
+이 프로젝트는 CORS 문제를 해결하기 위해 **Netlify Functions**를 프록시로 사용합니다:
+
+#### 장점
+
+1. **완전한 CORS 해결**: 서버 사이드에서 Google Apps Script 호출
+2. **브라우저 제한 우회**: 클라이언트에서 직접 GAS 호출하지 않음
+3. **안정성**: 모든 브라우저에서 일관된 동작
+4. **보안**: API 키나 민감한 정보를 클라이언트에 노출하지 않음
+
+#### 작동 원리
+
+```
+브라우저 → Netlify Functions → Google Apps Script
+```
+
+1. 브라우저가 `/api/gas-proxy`로 요청
+2. Netlify Functions가 Google Apps Script 호출
+3. 결과를 브라우저로 반환
+
+### 대체 방법: 텍스트 형식 사용
 
 #### 데이터 형식
 

@@ -1,0 +1,19 @@
+{
+  "name": "vocab-flashcard",
+  "version": "1.0.0",
+  "description": "단어장 플래시카드 앱 with Netlify Functions",
+  "main": "index.html",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "echo 'Static site - no build needed'"
+  },
+  "dependencies": {
+    "node-fetch": "^2.6.7"
+  },
+  "devDependencies": {
+    "netlify-cli": "^12.0.0"
+  },
+  "keywords": ["flashcard", "vocabulary", "netlify", "functions"],
+  "author": "",
+  "license": "MIT"
+} 

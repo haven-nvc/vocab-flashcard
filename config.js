@@ -26,7 +26,7 @@ const CONFIG = {
         SAVE_PROGRESS: false
     },
     
-    // Google Apps Script URL (결과 저장용)
+    // Google Apps Script URL (Netlify Functions를 통해 프록시됨)
     GAS_API_URL: "https://script.google.com/macros/s/AKfycbxpu9oj2KEYWByxP2lUNy6HmXfvHIFQ7ecnnSmDNxqkBre_ZE88vN66DGswrz9QvqM/exec",
     
     // UI 텍스트 설정

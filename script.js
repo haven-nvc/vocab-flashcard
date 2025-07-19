@@ -201,21 +201,13 @@ class FlashcardApp {
             console.log('단어장 데이터 로드 시작...');
             console.log('학생 이름:', this.studentName);
             
-            // Google Apps Script URL 확인
-            if (!window.GAS_API_URL || window.GAS_API_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
-                console.warn('Google Apps Script URL이 설정되지 않았습니다. 로컬 테스트 데이터를 사용합니다.');
-                this.useLocalTestData();
-                return;
-            }
-            
-            // Google Apps Script 호출 (텍스트 형식)
-            const apiUrl = `${window.GAS_API_URL}?student=${encodeURIComponent(this.studentName)}`;
+            // Netlify Functions를 통한 Google Apps Script 호출
+            const apiUrl = `/api/gas-proxy?student=${encodeURIComponent(this.studentName)}`;
             console.log('API URL:', apiUrl);
             
             // 텍스트 형식으로 데이터 로드
             const response = await fetch(apiUrl, {
                 method: 'GET',
-                mode: 'cors',
                 headers: {
                     'Content-Type': 'text/plain',
                 }
@@ -592,17 +584,11 @@ class FlashcardApp {
             console.log('학습 결과를 시트에 저장 중...');
             console.log(`학생: ${this.studentName}, 맞은 개수: ${this.correctCount}, 틀린 개수: ${this.incorrectCount}`);
             
-            // Google Apps Script URL 확인
-            if (!window.GAS_API_URL) {
-                console.warn('Google Apps Script URL이 설정되지 않아 결과를 저장할 수 없습니다.');
-                return;
-            }
-            
             // 텍스트 형식으로 데이터 전송 (studentName,correctCount,incorrectCount)
             const postData = `${this.studentName},${this.correctCount},${this.incorrectCount}`;
             
-            // POST 요청으로 결과 전송
-            const response = await fetch(window.GAS_API_URL, {
+            // Netlify Functions를 통한 POST 요청으로 결과 전송
+            const response = await fetch('/api/gas-proxy', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'text/plain',
