@@ -208,30 +208,72 @@ class FlashcardApp {
                 return;
             }
             
-            // Google Apps Script 호출 (JSONP 방식으로 CORS 우회)
+            // Google Apps Script 호출 (텍스트 형식)
             const apiUrl = `${window.GAS_API_URL}?student=${encodeURIComponent(this.studentName)}`;
             console.log('API URL:', apiUrl);
             
-            // JSONP 방식으로 데이터 로드 (CORS 우회)
-            const data = await this.loadDataWithJSONP(apiUrl);
+            // 텍스트 형식으로 데이터 로드
+            const response = await fetch(apiUrl, {
+                method: 'GET',
+                mode: 'cors',
+                headers: {
+                    'Content-Type': 'text/plain',
+                }
+            });
             
-            console.log('API 응답:', data);
-            
-            if (!data.success) {
-                throw new Error(data.error || '데이터를 가져올 수 없습니다.');
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
             
-            if (!data.data || data.data.length === 0) {
-                throw new Error('스프레드시트에 데이터가 없습니다. A열에 영어단어, B열에 뜻을 입력해주세요.');
+            const textData = await response.text();
+            console.log('API 응답 (텍스트):', textData);
+            
+            // 텍스트 응답 파싱
+            const lines = textData.trim().split('\n');
+            
+            if (lines.length === 0) {
+                throw new Error('빈 응답을 받았습니다.');
+            }
+            
+            const firstLine = lines[0];
+            
+            if (firstLine.startsWith('ERROR:')) {
+                throw new Error(firstLine.substring(6).trim());
+            }
+            
+            if (!firstLine.startsWith('SUCCESS')) {
+                throw new Error('잘못된 응답 형식입니다.');
+            }
+            
+            if (lines.length < 3) {
+                throw new Error('데이터가 부족합니다.');
+            }
+            
+            const count = parseInt(lines[1]);
+            const vocabData = [];
+            
+            // 3번째 줄부터 데이터 파싱 (단어|뜻 형식)
+            for (let i = 2; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (line) {
+                    const parts = line.split('|');
+                    if (parts.length === 2) {
+                        vocabData.push({
+                            word: parts[0].trim(),
+                            meaning: parts[1].trim()
+                        });
+                    }
+                }
+            }
+            
+            console.log(`${vocabData.length}개의 단어를 로드했습니다.`);
+            
+            if (vocabData.length === 0) {
+                throw new Error('유효한 단어 데이터가 없습니다. A열에 영어단어, B열에 뜻을 입력해주세요.');
             }
             
             // 단어 데이터 변환
-            this.vocabulary = data.data.map(item => ({
-                word: String(item.word || '').trim(),
-                meaning: String(item.meaning || '').trim()
-            })).filter(item => item.word && item.meaning); // 빈 행 제거
-            
-            console.log(`${this.vocabulary.length}개의 단어를 로드했습니다.`);
+            this.vocabulary = vocabData.filter(item => item.word && item.meaning);
             
             if (this.vocabulary.length === 0) {
                 throw new Error('유효한 단어 데이터가 없습니다. A열에 영어단어, B열에 뜻을 입력해주세요.');
@@ -248,67 +290,56 @@ class FlashcardApp {
             // CORS 오류 및 네트워크 오류 감지
             const isCorsError = error.message.includes('CORS') || 
                                error.message.includes('Failed to fetch') ||
-                               error.message.includes('Access to fetch');
+                               error.message.includes('Access-Control') ||
+                               error.message.includes('NetworkError') ||
+                               error.message.includes('TypeError') ||
+                               error.message.includes('타임아웃');
             
-            const isNetworkError = error.name === 'TypeError' && 
-                                 (error.message.includes('fetch') || 
-                                  error.message.includes('Failed to fetch'));
+            const isNetworkError = error.message.includes('fetch') ||
+                                  error.message.includes('network') ||
+                                  error.message.includes('connection') ||
+                                  error.message.includes('timeout');
             
-            if (isCorsError || isNetworkError) {
-                console.warn('CORS 또는 네트워크 오류 감지, 로컬 테스트 데이터 사용');
-                console.warn('해결 방법: Google Apps Script를 새로 배포하고 CORS 헤더가 추가되었는지 확인하세요.');
+            let errorMessage = '';
+            
+            if (isCorsError) {
+                errorMessage = `CORS 오류가 발생했습니다. 
+                <br><br>
+                <strong>해결 방법:</strong>
+                <ul>
+                    <li>Google Apps Script가 올바르게 배포되었는지 확인</li>
+                    <li>스프레드시트 접근 권한이 "링크가 있는 모든 사용자(보기 가능)"로 설정되었는지 확인</li>
+                    <li>브라우저 캐시를 삭제하고 페이지를 새로고침</li>
+                    <li>다른 브라우저에서 시도</li>
+                </ul>
+                <br>
+                <strong>오류 상세:</strong> ${error.message}`;
+            } else if (isNetworkError) {
+                errorMessage = `네트워크 오류가 발생했습니다.
+                <br><br>
+                <strong>해결 방법:</strong>
+                <ul>
+                    <li>인터넷 연결을 확인해주세요</li>
+                    <li>방화벽이나 보안 소프트웨어가 차단하고 있는지 확인</li>
+                    <li>잠시 후 다시 시도해주세요</li>
+                </ul>
+                <br>
+                <strong>오류 상세:</strong> ${error.message}`;
             } else {
-                console.warn('기타 오류 감지, 로컬 테스트 데이터 사용');
+                errorMessage = `데이터를 불러오는 중 오류가 발생했습니다.
+                <br><br>
+                <strong>오류 상세:</strong> ${error.message}
+                <br><br>
+                <strong>확인사항:</strong>
+                <ul>
+                    <li>config.js에서 GAS_API_URL이 올바르게 설정되었는지 확인</li>
+                    <li>Google Apps Script가 정상적으로 배포되었는지 확인</li>
+                    <li>스프레드시트에 데이터가 있는지 확인</li>
+                </ul>`;
             }
             
-            // API 실패 시 로컬 데이터 사용
-            console.log('Google Apps Script 호출 실패, 로컬 테스트 데이터로 대체');
-            this.useLocalTestData();
+            this.showError(errorMessage);
         }
-    }
-    
-    /**
-     * JSONP 방식으로 데이터 로드 (CORS 우회)
-     */
-    loadDataWithJSONP(url) {
-        return new Promise((resolve, reject) => {
-            // 고유한 콜백 함수명 생성
-            const callbackName = 'jsonpCallback_' + Math.random().toString(36).substr(2, 9);
-            
-            // 전역 콜백 함수 생성
-            window[callbackName] = (data) => {
-                // 스크립트 태그 제거
-                document.head.removeChild(script);
-                // 전역 함수 제거
-                delete window[callbackName];
-                
-                if (data.success) {
-                    resolve(data);
-                } else {
-                    reject(new Error(data.error || '데이터를 가져올 수 없습니다.'));
-                }
-            };
-            
-            // 스크립트 태그 생성 및 추가
-            const script = document.createElement('script');
-            script.src = `${url}&callback=${callbackName}`;
-            script.onerror = () => {
-                document.head.removeChild(script);
-                delete window[callbackName];
-                reject(new Error('JSONP 요청 실패'));
-            };
-            
-            document.head.appendChild(script);
-            
-            // 타임아웃 설정 (10초)
-            setTimeout(() => {
-                if (window[callbackName]) {
-                    document.head.removeChild(script);
-                    delete window[callbackName];
-                    reject(new Error('JSONP 요청 타임아웃'));
-                }
-            }, 10000);
-        });
     }
     
     /**
@@ -567,25 +598,31 @@ class FlashcardApp {
                 return;
             }
             
+            // 텍스트 형식으로 데이터 전송 (studentName,correctCount,incorrectCount)
+            const postData = `${this.studentName},${this.correctCount},${this.incorrectCount}`;
+            
             // POST 요청으로 결과 전송
             const response = await fetch(window.GAS_API_URL, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'text/plain',
                 },
-                body: JSON.stringify({
-                    studentName: this.studentName,
-                    correctCount: this.correctCount,
-                    incorrectCount: this.incorrectCount
-                })
+                body: postData
             });
             
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
             
-            const result = await response.json();
+            const result = await response.text();
             console.log('결과 저장 성공:', result);
+            
+            // 성공 메시지 확인
+            if (result.startsWith('SUCCESS:')) {
+                console.log('결과가 성공적으로 저장되었습니다.');
+            } else if (result.startsWith('ERROR:')) {
+                console.warn('결과 저장 중 오류:', result.substring(6));
+            }
             
         } catch (error) {
             console.error('결과 저장 실패:', error);
@@ -629,7 +666,7 @@ class FlashcardApp {
      */
     showError(message) {
         console.error('에러:', message);
-        this.elements.errorMessage.textContent = message;
+        this.elements.errorMessage.innerHTML = message; // HTML 태그 허용
         this.hideLoading();
         this.elements.error.classList.remove('hidden');
     }
