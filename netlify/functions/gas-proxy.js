@@ -6,7 +6,8 @@ exports.handler = async function(event, context) {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Max-Age': '86400'
+    'Access-Control-Max-Age': '86400',
+    'Content-Type': 'text/plain; charset=utf-8'
   };
 
   // OPTIONS 요청 처리 (CORS preflight)
@@ -52,10 +53,7 @@ exports.handler = async function(event, context) {
       
       return {
         statusCode: response.status,
-        headers: {
-          ...headers,
-          'Content-Type': 'text/plain; charset=utf-8'
-        },
+        headers,
         body: data
       };
     }
@@ -66,10 +64,7 @@ exports.handler = async function(event, context) {
     
     return {
       statusCode: response.status,
-      headers: {
-        ...headers,
-        'Content-Type': 'text/plain; charset=utf-8'
-      },
+      headers,
       body: data
     };
     
@@ -78,10 +73,7 @@ exports.handler = async function(event, context) {
     
     return {
       statusCode: 500,
-      headers: {
-        ...headers,
-        'Content-Type': 'text/plain; charset=utf-8'
-      },
+      headers,
       body: `ERROR: 프록시 서버 오류가 발생했습니다. ${error.message}`
     };
   }
