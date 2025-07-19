@@ -4,7 +4,7 @@
 
 ### 1-1. Google Apps Script 배포
 1. `gas-api.js` 파일을 Google Apps Script에 배포
-2. 웹앱 URL 복사 (예: `https://script.google.com/macros/s/AKfycbxpu9oj2KEYWByxP2lUNy6HmXfvHIFQ7ecnnSmDNxqkBre_ZE88vN66DGswrz9QvqM/exec`)
+2. 웹앱 URL 복사 (예: `https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec`)
 
 ### 1-2. 환경 변수 설정
 1. `.env` 파일을 생성하고 Google Apps Script 웹앱 URL 설정:
