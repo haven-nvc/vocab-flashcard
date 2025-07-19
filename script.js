@@ -79,10 +79,7 @@ class FlashcardApp {
      */
     setupEventListeners() {
         document.addEventListener('keydown', (e) => {
-            // 로딩 중이거나 에러 상태에서는 키 입력 무시
-            if (!this.elements.app.classList.contains('hidden')) {
-                this.handleKeyPress(e);
-            }
+            this.handleKeyPress(e);
         });
         
         // 카드 클릭으로도 뒤집기 가능
@@ -97,6 +94,14 @@ class FlashcardApp {
      * 키보드 입력 처리
      */
     handleKeyPress(event) {
+        // 로딩 중이거나 에러 상태에서는 키 입력 무시
+        if (this.elements.loading.classList.contains('hidden') === false || 
+            this.elements.error.classList.contains('hidden') === false) {
+            return;
+        }
+        
+        console.log('키 입력 감지:', event.code, '뜻 표시 상태:', this.showingMeaning, '카드 수:', this.currentCards.length);
+        
         switch (event.code) {
             case 'Space':
                 event.preventDefault();
@@ -105,15 +110,21 @@ class FlashcardApp {
                 
             case 'ArrowRight':
                 event.preventDefault();
-                if (this.showingMeaning) {
+                console.log('오른쪽 화살표 입력 - 뜻 표시:', this.showingMeaning, '카드 수:', this.currentCards.length);
+                if (this.showingMeaning && this.currentCards.length > 0) {
                     this.markCorrect();
+                } else {
+                    console.log('오른쪽 화살표 무시됨 - 조건 불충족');
                 }
                 break;
                 
             case 'ArrowLeft':
                 event.preventDefault();
-                if (this.showingMeaning) {
+                console.log('왼쪽 화살표 입력 - 뜻 표시:', this.showingMeaning, '카드 수:', this.currentCards.length);
+                if (this.showingMeaning && this.currentCards.length > 0) {
                     this.markIncorrect();
+                } else {
+                    console.log('왼쪽 화살표 무시됨 - 조건 불충족');
                 }
                 break;
         }
