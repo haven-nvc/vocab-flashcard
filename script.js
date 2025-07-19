@@ -210,7 +210,7 @@ class FlashcardApp {
             console.log('학생 이름:', this.studentName);
             
             // Netlify Functions를 통한 Google Apps Script 호출
-            const apiUrl = `/api/gas-proxy?student=${encodeURIComponent(this.studentName)}`;
+            const apiUrl = `/.netlify/functions/gas-proxy?student=${encodeURIComponent(this.studentName)}`;
             console.log('API URL:', apiUrl);
             
             // 텍스트 형식으로 데이터 로드
@@ -587,7 +587,7 @@ class FlashcardApp {
     }
     
     /**
-     * 학습 결과를 Google Apps Script를 통해 저장
+     * 학습 결과를 Google Sheets에 저장
      */
     async saveResultsToSheet() {
         try {
@@ -598,7 +598,7 @@ class FlashcardApp {
             const postData = `${this.studentName},${this.correctCount},${this.incorrectCount}`;
             
             // Netlify Functions를 통한 POST 요청으로 결과 전송
-            const response = await fetch('/api/gas-proxy', {
+            const response = await fetch('/.netlify/functions/gas-proxy', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'text/plain',

@@ -26,8 +26,8 @@ const CONFIG = {
         SAVE_PROGRESS: false
     },
     
-    // Google Apps Script URL (기본값으로 설정)
-    GAS_API_URL: "/api/gas-proxy",
+    // Netlify Functions를 통한 Google Apps Script URL
+    GAS_API_URL: "/.netlify/functions/gas-proxy",
     
     // UI 텍스트 설정
     MESSAGES: {
